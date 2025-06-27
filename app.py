@@ -11,14 +11,15 @@ data = {
     "c": [7, 8, 9],
 }
 
-options = st.selectbox(
-    "Which chapter do you want to study?",
-    ["Joins","Group by","Case When","Grouping Sets","Filter","Rollup & Cube","Window Functions"],
-    index = None,
-    placeholder = "Select a theme..."
-)
+with st.sidebar:
+    options = st.selectbox(
+            "Which chapter do you want to study?",
+            ["Joins","Group by","Case When","Grouping Sets","Filter","Rollup & Cube","Window Functions"],
+            index = None,
+            placeholder = "Select a theme..."
+    )
 
-st.write(f"Theme selected is {options}")
+    st.write(f"Theme selected is {options}")
 
 df = pd.DataFrame(data)
 query = st.text_area("Entrez votre requête SQL")
