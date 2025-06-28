@@ -30,6 +30,15 @@ CROSS JOIN food_items
 """
 answer_df = db.sql(answer_query).df()
 
+with st.sidebar:
+    options = st.selectbox(
+            "Which chapter do you want to study?",
+            ["Joins","Group by","Case When","Grouping Sets","Filter","Rollup & Cube","Window Functions"],
+            index = None,
+            placeholder = "Select a theme..."
+    )
+    st.write(f"Theme selected is {options}")
+
 query_input = st.text_area(
     label = "Saisissez votre requête SQL",
     value = None,
