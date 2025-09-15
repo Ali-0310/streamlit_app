@@ -1,0 +1,27 @@
+name : check_code_quality
+on : pull_request
+jobs:
+  uv_package:
+    name : python
+    runs-on : ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file : "pyproject.toml"
+
+      - name: Install uv 
+        uses: astral-sh/setup-uv@v6
+      
+      - name : "Test github actions"
+        run : |
+          echo "Hello, Github Actions!"
+          pwd
+      
+      - name : "test black package"
+        run: |
+          uv run black --check --verbose .
+      
