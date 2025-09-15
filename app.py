@@ -8,7 +8,7 @@ import streamlit as st
 
 st.title("SRS application - SQL fundamentals")
 st.write(
-"This is a simple application that allows you to study SQL fundamentals using spaced repetition."
+    "This is a simple application that allows you to study SQL fundamentals using spaced repetition."
 )
 
 # data
