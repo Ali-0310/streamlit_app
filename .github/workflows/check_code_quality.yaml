@@ -11,10 +11,10 @@ jobs:
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
-          python-version-file : ../../pyproject.toml
+          python-version-file : "pyproject.toml"
         run : |
           echo "Python version: ${{ env.PYTHON_VERSION }}"
-          pwd
+          pwd 
 
       - name: Install uv 
         uses: astral-sh/setup-uv@v6
