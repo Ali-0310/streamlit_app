@@ -19,5 +19,9 @@ jobs:
       - name : "Test github actions"
         run : |
           echo "Hello, Github Actions!"
-          uv pip freeze
+          pwd
+      
+      - name : "test black package"
+        run: |
+          uv run black --check --verbose .
       
