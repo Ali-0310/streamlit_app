@@ -65,7 +65,7 @@ if query_input:
         st.error("The number of columns is not the same as the answer expected")
 
     try:
-        user_answer_df = user_answer_df[answer_df.columns].to_frame()
+        user_answer_df = user_answer_df[answer_df.columns]
         st.dataframe(answer_df.compare(user_answer_df))
     except KeyError as e:
         st.warning(f"The column {e} is not in the user answer. It will be ignored.")
