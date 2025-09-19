@@ -2,26 +2,25 @@
 
 import duckdb as db
 import streamlit as st
-import ast
 
 # Connect to the database
-con = db.connect(database="data/sql_exercises_tables.duckdb", read_only = False)
+con = db.connect(database="data/sql_exercises_tables.duckdb", read_only=False)
 
-#-----------------------------------------------------
+# -----------------------------------------------------
 # Streamlit app
-#-----------------------------------------------------
+# -----------------------------------------------------
 
-#-----------------------------------------------------
+# -----------------------------------------------------
 # Title and description
-#-----------------------------------------------------
+# -----------------------------------------------------
 st.title("SRS application - SQL fundamentals")
 st.write(
     "This is a simple application that allows you to study SQL fundamentals using spaced repetition."
 )
 
-#-----------------------------------------------------
+# -----------------------------------------------------
 # Sidebar
-#-----------------------------------------------------
+# -----------------------------------------------------
 with st.sidebar:
     theme = st.selectbox(
         "Quel chapitre voulez-vous étudier ?",
@@ -34,31 +33,37 @@ with st.sidebar:
         index=None,
         placeholder="Sélectionnez un thème...",
     )
-    st.write(f"Theme selected is {theme}")
+    st.write(f"Theme selected is : {theme}")
     # Get the exercises list
-    exercise = con.execute(f"SELECT * FROM memory_state WHERE Theme = '{theme}'").df()
+    exercise = (
+        con.execute(f"SELECT * FROM memory_state WHERE Theme = '{theme}'")
+        .df()
+        .sort_values(by="last_reviewed")
+        .reset_index(drop=True)
+    )
+
     st.dataframe(exercise)
 
 if theme is not None:
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     # ANSWER_QUERY
-    #-----------------------------------------------------
-    ANSWER_STR = exercise.loc[0,"Exercise_name"]
-    with open(f'answers/{ANSWER_STR}.sql', 'r') as file:
+    # -----------------------------------------------------
+    ANSWER_STR = exercise.loc[0, "Exercise_name"]
+    with open(f"answers/{ANSWER_STR}.sql", "r") as file:
         answer_query = file.read()
 
     answer_df = con.execute(answer_query).df()
 
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     # USER_QUERY_INPUT
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     query_input = st.text_area(
         label="Saisissez votre requête SQL", value=None, key="user_input_query"
     )
 
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     # Analyse the user answer
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     if query_input:
         user_answer_df = con.execute(query_input).df()
         st.dataframe(user_answer_df)
@@ -81,24 +86,24 @@ if theme is not None:
 
         st.dataframe(user_answer_df.equals(answer_df))
 
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     # Display tables and solution expected
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     tab1, tab2 = st.tabs(["Tables", "Solution"])
     with tab1:
         # Display tables available and table expected
-        exercise_tables = ast.literal_eval(exercise.loc[0,"tables"])
+        exercise_tables = exercise.loc[0, "tables"]
         st.subheader("Tables Disponibles:")
         for table in exercise_tables:
-            st.subheader(f"{table}")
+            st.write(f"{table}")
             st.dataframe(con.execute(f"SELECT * FROM {table}").df())
 
-        st.subheader("Table wanted:")
+        st.subheader("Table Expected:")
         st.dataframe(answer_df)
 
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     # Display the answer query
-    #-----------------------------------------------------
+    # -----------------------------------------------------
     with tab2:
         st.write(f"The query is: {answer_query}")
 
