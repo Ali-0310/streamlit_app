@@ -9,3 +9,4 @@ test_db.py
 .python-version
 pyproject.toml
 uv.lock
+data/*.duckdb
