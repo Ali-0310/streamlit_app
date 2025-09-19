@@ -1,21 +1,29 @@
 import  io 
 import pandas as pd
 import duckdb as db
+import os
 
-con = db.connect(database = "data/sql_exercises_tables.duckdb", read_only = False)
+# Supprimer le fichier de base de données s'il existe
+db_file = "data/sql_exercises_tables.duckdb"
+if os.path.exists(db_file):
+    os.remove(db_file)
+
+# Créer une nouvelle connexion
+con = db.connect(database=db_file, read_only=False)
 
 # -----------------------------------------------------
 # Exercises List
 # -----------------------------------------------------
 data = {
-    "Theme" : ["Cross Join","window_functions"],
+    "Theme" : ["cross_join","window_functions"],
     "Exercise_name" : ["beverages_and_food","simple_window"],
     "tables" : [["beverages", "food_items"], "simple_window"],
     "last_reviewed" : ["1970-01-01","1970-01-01"]
 }
 
 memory_state_df = pd.DataFrame(data)
-con.execute("CREATE TABLE IF NOT EXISTS memory_state AS SELECT * FROM memory_state_df")
+con.execute("DROP TABLE IF EXISTS memory_state")
+con.execute("CREATE TABLE memory_state AS SELECT * FROM memory_state_df")
 
 
 # -----------------------------------------------------

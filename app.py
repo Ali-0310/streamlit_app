@@ -2,6 +2,7 @@
 
 import duckdb as db
 import streamlit as st
+import ast
 
 # Connect to the database
 con = db.connect(database="data/sql_exercises_tables.duckdb", read_only = False)
@@ -19,23 +20,20 @@ st.write(
 # Sidebar
 with st.sidebar:
     theme = st.selectbox(
-        "Which chapter do you want to study?",
+        "Quel chapitre voulez-vous étudier ?",
         [
-            "Cross Join",
-            "Group by",
+            "cross_join",
+            "window_functions",
             "Case When",
             "Grouping Sets",
-            "Filter",
-            "Rollup & Cube",
-            "Window Functions",
         ],
-        index=None,
-        placeholder="Select a theme...",
+        index=0,  # Valeur par défaut sélectionnée à chaque synchronisation de la page
+        placeholder="Sélectionnez un thème...",
     )
     st.write(f"Theme selected is {theme}")
     # Get the exercises list
-    exercise = con.execute(f"SELECT * FROM memory_state WHERE Theme = '{theme}'")
-    st.write(exercise)
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE Theme = '{theme}'").df()
+    st.dataframe(exercise)
 
 # ANSWER_QUERY = """
 # SELECT * 
@@ -49,9 +47,9 @@ query_input = st.text_area(
     label="Saisissez votre requête SQL", value=None, key="user_input_query"
 )
 
-# if query_input:
-#     user_answer_df = db.sql(query_input).df()
-#     st.dataframe(user_answer_df)
+if query_input:
+    user_query = con.execute(query_input).df()
+    st.dataframe(user_query)
 
 #     # Check of Columns number is the same as the answer_df:
 #     if len(user_answer_df.columns) != len(answer_df.columns):
@@ -72,14 +70,21 @@ query_input = st.text_area(
     # st.dataframe(user_answer_df.equals(answer_df))
 
 ## Display tables and solution
-# tab1, tab2 = st.tabs(["Tables", "Solution"])
-# with tab1:
-#     st.subheader("Table: beverages")
-#     st.dataframe(beverages)
-#     st.subheader("Table: food_items")
-#     st.dataframe(food_items)
-#     st.subheader("Table wanted:")
-#     st.dataframe(answer_df)
+tab1, tab2 = st.tabs(["Tables", "Solution"])
+with tab1:
+    # Display tables available and table expected
+    exercise_tables = ast.literal_eval(exercise.loc[0,"tables"])
+    st.subheader("Tables Disponibles:")
+    for table in exercise_tables:
+        st.subheader(f"{table}")
+        st.dataframe(con.execute(f"SELECT * FROM {table}").df())
 
-# with tab2:
-#     st.write(f"The query is: {ANSWER_QUERY}")
+    st.subheader("Table wanted:")
+    ANSWER_STR = exercise.loc[0,"Exercise_name"]
+    with open(f'answers/{ANSWER_STR}.sql', 'r') as file:
+        answer = file.read()
+    st.dataframe(con.execute(answer).df())
+
+# Display the answer query
+with tab2:
+    st.write(f"The query is: {answer}")
