@@ -36,27 +36,28 @@ st.write(
 )
 
 # -----------------------------------------------------
+# Get the memory state table
+# -----------------------------------------------------
+# Query to get the list of exercises
+query_exercises_list = "SELECT * FROM memory_state"
+memory_state_df = con.execute(query_exercises_list).df()
+
+# -----------------------------------------------------
 # Sidebar
 # -----------------------------------------------------
 with st.sidebar:
     theme = st.selectbox(
         "Quel chapitre voulez-vous étudier ?",
-        [
-            "cross_join",
-            "window_functions",
-            "Case When",
-            "Grouping Sets",
-        ],
+        memory_state_df["theme"].unique(),
         index=None,
         placeholder="Sélectionnez un thème...",
     )
-    # Query to get the list of exercises
-    query_exercises_list = "SELECT * FROM memory_state"
+
     if theme:
         st.write(f"Thème sélectionné : {theme}")
         # Retrieve the exercises list
         exercise = (
-            con.execute(f"{query_exercises_list} WHERE Theme = '{theme}'")
+            con.execute(f"{query_exercises_list} WHERE theme = '{theme}'")
             .df()
             .sort_values(by="last_reviewed")
             .reset_index(drop=True)
@@ -74,7 +75,7 @@ with st.sidebar:
 # -----------------------------------------------------
 # Retrieve the answer query
 # -----------------------------------------------------
-ANSWER_STR = exercise.loc[0, "Exercise_name"]
+ANSWER_STR = exercise.loc[0, "exercise_name"]
 with open(f"answers/{ANSWER_STR}.sql", "r") as file:
     answer_query = file.read()
 
