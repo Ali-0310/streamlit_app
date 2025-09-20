@@ -24,6 +24,7 @@ if "sql_exercises_tables.duckdb" not in os.listdir("data"):
 # -----------------------------------------------------
 con = db.connect(database="data/sql_exercises_tables.duckdb", read_only=False)
 
+
 # -----------------------------------------------------
 # Functions refacored
 # -----------------------------------------------------
@@ -49,7 +50,9 @@ def check_user_query(user_df: pd.DataFrame, df_expected: pd.DataFrame) -> None:
                 f"La colonne {e} n'est pas présente dans votre réponse. Elle sera ignorée."
             )
             # Remove missing columns to avoid further errors
-            user_df = user_df[[col for col in user_df.columns if col in df_expected.columns]]
+            user_df = user_df[
+                [col for col in user_df.columns if col in df_expected.columns]
+            ]
 
         n_lines_diff = user_df.shape[0] - df_expected.shape[0]
         if n_lines_diff != 0:
@@ -65,10 +68,13 @@ def check_user_query(user_df: pd.DataFrame, df_expected: pd.DataFrame) -> None:
             else:
                 st.error("La réponse est incorrecte, veuillez réessayer.")
         except KeyError as e:
-            st.error(f"Erreur lors de la comparaison des DataFrames : colonne manquante {e}")
+            st.error(
+                f"Erreur lors de la comparaison des DataFrames : colonne manquante {e}"
+            )
 
     except KeyError as e:
         st.error(f"Erreur inattendue de clé : {e}")
+
 
 # -----------------------------------------------------
 # Streamlit app
@@ -106,10 +112,7 @@ with st.sidebar:
 
     # Récupérer et afficher la liste des exercices
     exercise = (
-        con.execute(query)
-        .df()
-        .sort_values(by="last_reviewed")
-        .reset_index(drop=True)
+        con.execute(query).df().sort_values(by="last_reviewed").reset_index(drop=True)
     )
     st.dataframe(exercise)
 
@@ -134,7 +137,7 @@ query_input = st.text_area(
 # -----------------------------------------------------
 if query_input:
     user_answer_df = con.execute(query_input).df()
-    
+
     # Check if the User's query is valid:
     check_user_query(user_answer_df, answer_df)
 
