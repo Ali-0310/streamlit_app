@@ -1,9 +1,12 @@
 .venv/
 .git 
 
+test_db.py
+
 *.csv 
 *.json
 
 .python-version
 pyproject.toml
 uv.lock
+data/*.duckdb
