@@ -15,7 +15,7 @@ if "data" not in os.listdir():
     print("The database does not exist. Creating it...")
     logging.error("The database does not exist. Creating it...")
     os.mkdir("data")
-    
+
 if "sql_exercises_tables.duckdb" not in os.listdir("data"):
     logging.error("The file does not exist. Creating it...")
     exec(open("init_db.py").read())
