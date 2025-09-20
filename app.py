@@ -49,17 +49,10 @@ memory_state_df = con.execute(query_exercises_list).df()
 with st.sidebar:
     theme = st.selectbox(
         "Quel chapitre voulez-vous étudier ?",
-        [
-            "cross_join",
-            "window_functions",
-            "Case When",
-            "Grouping Sets",
-        ],
+        memory_state_df["Theme"].unique(),
         index=None,
         placeholder="Sélectionnez un thème...",
     )
-    # Query to get the list of exercises
-    query_exercises_list = "SELECT * FROM memory_state"
     if theme:
         st.write(f"Thème sélectionné : {theme}")
         # Retrieve the exercises list
