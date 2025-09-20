@@ -100,7 +100,9 @@ if query_input:
     try:
         user_answer_df = user_answer_df[answer_df.columns]
     except KeyError as e:
-        st.warning(f"La colonne {e} n'est pas présente dans votre réponse. Elle sera ignorée.")
+        st.warning(
+            f"La colonne {e} n'est pas présente dans votre réponse. Elle sera ignorée."
+        )
 
     n_lines_diff = user_answer_df.shape[0] - answer_df.shape[0]
     if n_lines_diff != 0:
