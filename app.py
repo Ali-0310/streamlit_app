@@ -4,6 +4,7 @@ import duckdb as db
 import streamlit as st
 import logging
 import os
+import pandas as pd
 
 # -----------------------------------------------------
 # Database connection and initialization
@@ -23,10 +24,61 @@ if "sql_exercises_tables.duckdb" not in os.listdir("data"):
 # -----------------------------------------------------
 con = db.connect(database="data/sql_exercises_tables.duckdb", read_only=False)
 
+
+# -----------------------------------------------------
+# Functions refacored
+# -----------------------------------------------------
+def check_user_query(user_df: pd.DataFrame, df_expected: pd.DataFrame) -> None:
+    """
+    Checks if the user's DataFrame matches the expected DataFrame.
+    Displays appropriate Streamlit messages for errors, warnings, and success.
+
+    Args:
+        user_df (pd.DataFrame): The DataFrame resulting from the user's query.
+        df_expected (pd.DataFrame): The expected DataFrame for comparison.
+    """
+    try:
+        # Check if the number of columns is the same
+        if len(user_df.columns) != len(df_expected.columns):
+            st.error("Le nombre de colonnes n'est pas le même que celui attendu.")
+
+        # Try to reorder the columns as expected
+        try:
+            user_df = user_df[df_expected.columns]
+        except KeyError as e:
+            st.warning(
+                f"La colonne {e} n'est pas présente dans votre réponse. Elle sera ignorée."
+            )
+            # Remove missing columns to avoid further errors
+            user_df = user_df[
+                [col for col in user_df.columns if col in df_expected.columns]
+            ]
+
+        n_lines_diff = user_df.shape[0] - df_expected.shape[0]
+        if n_lines_diff != 0:
+            st.error(
+                f"Il y a une différence de {n_lines_diff} lignes avec la réponse attendue."
+            )
+
+        try:
+            if user_df.equals(df_expected):
+                st.dataframe(user_df)
+                st.balloons()
+                st.success("La réponse est correcte !")
+            else:
+                st.error("La réponse est incorrecte, veuillez réessayer.")
+        except KeyError as e:
+            st.error(
+                f"Erreur lors de la comparaison des DataFrames : colonne manquante {e}"
+            )
+
+    except KeyError as e:
+        st.error(f"Erreur inattendue de clé : {e}")
+
+
 # -----------------------------------------------------
 # Streamlit app
 # -----------------------------------------------------
-
 # -----------------------------------------------------
 # Title and description
 # -----------------------------------------------------
@@ -34,7 +86,6 @@ st.title("SRS application - SQL fundamentals")
 st.write(
     "Ceci est une application simple qui vous permet d'étudier les fondamentaux de SQL en utilisant la répétition espacée."
 )
-
 
 # --------------------------------------------------------------------------------------------------
 # Get the memory state table
@@ -49,33 +100,26 @@ memory_state_df = con.execute(query_exercises_list).df()
 with st.sidebar:
     theme = st.selectbox(
         "Quel chapitre voulez-vous étudier ?",
-        memory_state_df["Theme"].unique(),
+        memory_state_df["theme"].unique(),
         index=None,
         placeholder="Sélectionnez un thème...",
     )
     if theme:
         st.write(f"Thème sélectionné : {theme}")
-        # Retrieve the exercises list
-        exercise = (
-            con.execute(f"{query_exercises_list} WHERE Theme = '{theme}'")
-            .df()
-            .sort_values(by="last_reviewed")
-            .reset_index(drop=True)
-        )
-        st.dataframe(exercise)
+        query = f"{query_exercises_list} WHERE theme = '{theme}'"
     else:
-        exercise = (
-            con.execute(query_exercises_list)
-            .df()
-            .sort_values(by="last_reviewed")
-            .reset_index(drop=True)
-        )
-        st.dataframe(exercise)
+        query = query_exercises_list
+
+    # Récupérer et afficher la liste des exercices
+    exercise = (
+        con.execute(query).df().sort_values(by="last_reviewed").reset_index(drop=True)
+    )
+    st.dataframe(exercise)
 
 # -----------------------------------------------------
 # Retrieve the answer query
 # -----------------------------------------------------
-ANSWER_STR = exercise.loc[0, "Exercise_name"]
+ANSWER_STR = exercise.loc[0, "exercise_name"]
 with open(f"answers/{ANSWER_STR}.sql", "r") as file:
     answer_query = file.read()
 
@@ -94,29 +138,8 @@ query_input = st.text_area(
 if query_input:
     user_answer_df = con.execute(query_input).df()
 
-    # Check of Columns number is the same as the answer_df:
-    if len(user_answer_df.columns) != len(answer_df.columns):
-        st.error("Le nombre de colonnes n'est pas le même que celui attendu.")
-
-    try:
-        user_answer_df = user_answer_df[answer_df.columns]
-    except KeyError as e:
-        st.warning(
-            f"La colonne {e} n'est pas présente dans votre réponse. Elle sera ignorée."
-        )
-
-    n_lines_diff = user_answer_df.shape[0] - answer_df.shape[0]
-    if n_lines_diff != 0:
-        st.error(
-            f"Il y a une différence de {n_lines_diff} lignes avec la réponse attendue."
-        )
-
-    if user_answer_df.equals(answer_df):
-        st.dataframe(user_answer_df)
-        st.balloons()
-        st.success("La réponse est correcte !")
-    else:
-        st.error("La réponse est incorrecte, veuillez réessayer.")
+    # Check if the User's query is valid:
+    check_user_query(user_answer_df, answer_df)
 
 # -----------------------------------------------------
 # Display available tables and expected solution
