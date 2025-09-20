@@ -75,7 +75,7 @@ with st.sidebar:
 # -----------------------------------------------------
 # Retrieve the answer query
 # -----------------------------------------------------
-ANSWER_STR = exercise.loc[0, "Exercise_name"]
+ANSWER_STR = exercise.loc[0, "exercise_name"]
 with open(f"answers/{ANSWER_STR}.sql", "r") as file:
     answer_query = file.read()
 
