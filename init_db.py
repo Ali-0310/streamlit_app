@@ -15,8 +15,8 @@ con = db.connect(database=db_file, read_only=False)
 # Exercises List
 # -----------------------------------------------------
 data = {
-    "Theme": ["cross_join", "cross_join"],
-    "Exercise_name": ["beverages_and_food", "tshirt_sales"],
+    "theme": ["cross_join", "cross_join"],
+    "exercise_name": ["beverages_and_food", "tshirt_sales"],
     "tables": [["beverages", "food_items"], ["sizes", "trademarks"]],
     "last_reviewed": ["1980-01-01", "1970-01-01"],
 }
