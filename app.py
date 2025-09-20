@@ -2,8 +2,26 @@
 
 import duckdb as db
 import streamlit as st
+import logging
+import os
 
+# -----------------------------------------------------
 # Connect to the database
+# -----------------------------------------------------
+# verify if the database exists
+# -----------------------------------------------------
+if "data" not in os.listdir():
+    logging.error(os.listdir())
+    print("The database does not exist. Creating it...")
+    logging.error("The database does not exist. Creating it...")
+    os.mkdir("data")
+    
+if "sql_exercises_tables.duckdb" not in os.listdir("data"):
+    logging.error("The file does not exist. Creating it...")
+    exec(open("init_db.py").read())
+# -----------------------------------------------------
+# Connect to the database
+# -----------------------------------------------------
 con = db.connect(database="data/sql_exercises_tables.duckdb", read_only=False)
 
 # -----------------------------------------------------
