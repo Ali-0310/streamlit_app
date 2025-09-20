@@ -113,6 +113,7 @@ if query_input:
 
     if user_answer_df.equals(answer_df):
         st.dataframe(user_answer_df)
+        st.balloons()
         st.success("La réponse est correcte !")
     else:
         st.error("La réponse est incorrecte, veuillez réessayer.")
