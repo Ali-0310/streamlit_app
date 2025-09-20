@@ -35,6 +35,14 @@ st.write(
     "Ceci est une application simple qui vous permet d'étudier les fondamentaux de SQL en utilisant la répétition espacée."
 )
 
+
+# --------------------------------------------------------------------------------------------------
+# Get the memory state table
+# --------------------------------------------------------------------------------------------------
+# Query to get the list of exercises
+query_exercises_list = "SELECT * FROM memory_state"
+memory_state_df = con.execute(query_exercises_list).df()
+
 # -----------------------------------------------------
 # Sidebar
 # -----------------------------------------------------
