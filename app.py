@@ -6,16 +6,15 @@ import logging
 import os
 
 # -----------------------------------------------------
-# Connect to the database
+# Database connection and initialization
 # -----------------------------------------------------
-# verify if the database exists
-# -----------------------------------------------------
+# Check if the database directory exists, create it if not
 if "data" not in os.listdir():
     logging.error(os.listdir())
-    print("The database does not exist. Creating it...")
     logging.error("The database does not exist. Creating it...")
     os.mkdir("data")
 
+# Check if the database file exists, create it if not
 if "sql_exercises_tables.duckdb" not in os.listdir("data"):
     logging.error("The file does not exist. Creating it...")
     exec(open("init_db.py").read())
@@ -33,7 +32,7 @@ con = db.connect(database="data/sql_exercises_tables.duckdb", read_only=False)
 # -----------------------------------------------------
 st.title("SRS application - SQL fundamentals")
 st.write(
-    "This is a simple application that allows you to study SQL fundamentals using spaced repetition."
+    "Ceci est une application simple qui vous permet d'étudier les fondamentaux de SQL en utilisant la répétition espacée."
 )
 
 # -----------------------------------------------------
@@ -51,79 +50,89 @@ with st.sidebar:
         index=None,
         placeholder="Sélectionnez un thème...",
     )
-    st.write(f"Theme selected is : {theme}")
-    # Get the exercises list
-    exercise = (
-        con.execute(f"SELECT * FROM memory_state WHERE Theme = '{theme}'")
-        .df()
-        .sort_values(by="last_reviewed")
-        .reset_index(drop=True)
-    )
+    # Query to get the list of exercises
+    query_exercises_list = "SELECT * FROM memory_state"
+    if theme:
+        st.write(f"Thème sélectionné : {theme}")
+        # Retrieve the exercises list
+        exercise = (
+            con.execute(f"{query_exercises_list} WHERE Theme = '{theme}'")
+            .df()
+            .sort_values(by="last_reviewed")
+            .reset_index(drop=True)
+        )
+        st.dataframe(exercise)
+    else:
+        exercise = (
+            con.execute(query_exercises_list)
+            .df()
+            .sort_values(by="last_reviewed")
+            .reset_index(drop=True)
+        )
+        st.dataframe(exercise)
 
-    st.dataframe(exercise)
+# -----------------------------------------------------
+# Retrieve the answer query
+# -----------------------------------------------------
+ANSWER_STR = exercise.loc[0, "Exercise_name"]
+with open(f"answers/{ANSWER_STR}.sql", "r") as file:
+    answer_query = file.read()
 
-if theme is not None:
-    # -----------------------------------------------------
-    # ANSWER_QUERY
-    # -----------------------------------------------------
-    ANSWER_STR = exercise.loc[0, "Exercise_name"]
-    with open(f"answers/{ANSWER_STR}.sql", "r") as file:
-        answer_query = file.read()
+answer_df = con.execute(answer_query).df()
 
-    answer_df = con.execute(answer_query).df()
+# -----------------------------------------------------
+# User SQL query input
+# -----------------------------------------------------
+query_input = st.text_area(
+    label="Saisissez votre requête SQL", value=None, key="user_input_query"
+)
 
-    # -----------------------------------------------------
-    # USER_QUERY_INPUT
-    # -----------------------------------------------------
-    query_input = st.text_area(
-        label="Saisissez votre requête SQL", value=None, key="user_input_query"
-    )
+# -----------------------------------------------------
+# Analyze the user's answer
+# -----------------------------------------------------
+if query_input:
+    user_answer_df = con.execute(query_input).df()
 
-    # -----------------------------------------------------
-    # Analyse the user answer
-    # -----------------------------------------------------
-    if query_input:
-        user_answer_df = con.execute(query_input).df()
+    # Check of Columns number is the same as the answer_df:
+    if len(user_answer_df.columns) != len(answer_df.columns):
+        st.error("Le nombre de colonnes n'est pas le même que celui attendu.")
+
+    try:
+        user_answer_df = user_answer_df[answer_df.columns]
+    except KeyError as e:
+        st.warning(
+            f"La colonne {e} n'est pas présente dans votre réponse. Elle sera ignorée."
+        )
+
+    n_lines_diff = user_answer_df.shape[0] - answer_df.shape[0]
+    if n_lines_diff != 0:
+        st.error(
+            f"Il y a une différence de {n_lines_diff} lignes avec la réponse attendue."
+        )
+
+    if user_answer_df.equals(answer_df):
         st.dataframe(user_answer_df)
+        st.success("La réponse est correcte !")
+    else:
+        st.error("La réponse est incorrecte, veuillez réessayer.")
 
-        # Check of Columns number is the same as the answer_df:
-        if len(user_answer_df.columns) != len(answer_df.columns):
-            st.error("The number of columns is not the same as the answer expected")
+# -----------------------------------------------------
+# Display available tables and expected solution
+# -----------------------------------------------------
+tab1, tab2 = st.tabs(["Tables", "Solution"])
+with tab1:
+    # Display available tables and expected table
+    exercise_tables = exercise.loc[0, "tables"]
+    st.subheader("Tables disponibles :")
+    for table in exercise_tables:
+        st.write(f"{table}")
+        st.dataframe(con.execute(f"SELECT * FROM {table}").df())
 
-        try:
-            user_answer_df = user_answer_df[answer_df.columns]
-            st.dataframe(answer_df.compare(user_answer_df))
-        except KeyError as e:
-            st.warning(f"The column {e} is not in the user answer. It will be ignored.")
+    st.subheader("Table attendue :")
+    st.dataframe(answer_df)
 
-        n_lines_diff = user_answer_df.shape[0] - answer_df.shape[0]
-        if n_lines_diff != 0:
-            st.error(
-                f"Misssing Columns. You have {n_lines_diff} lines difference with the answer expected"
-            )
-
-        st.dataframe(user_answer_df.equals(answer_df))
-
-    # -----------------------------------------------------
-    # Display tables and solution expected
-    # -----------------------------------------------------
-    tab1, tab2 = st.tabs(["Tables", "Solution"])
-    with tab1:
-        # Display tables available and table expected
-        exercise_tables = exercise.loc[0, "tables"]
-        st.subheader("Tables Disponibles:")
-        for table in exercise_tables:
-            st.write(f"{table}")
-            st.dataframe(con.execute(f"SELECT * FROM {table}").df())
-
-        st.subheader("Table Expected:")
-        st.dataframe(answer_df)
-
-    # -----------------------------------------------------
-    # Display the answer query
-    # -----------------------------------------------------
-    with tab2:
-        st.write(f"The query is: {answer_query}")
-
-else:
-    st.warning("👈Merci de sélectionner un thème dans la barre latérale à gauche !")
+# -----------------------------------------------------
+# Display the answer query
+# -----------------------------------------------------
+with tab2:
+    st.write(f"La requête attendue est : {answer_query}")
